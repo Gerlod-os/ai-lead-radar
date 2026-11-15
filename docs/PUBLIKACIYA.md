@@ -56,6 +56,26 @@ git remote add origin <адрес репозитория>
 git push -u origin main
 ```
 
+### Если по https не пускает
+
+Бывает, что в системе уже авторизован другой аккаунт GitHub — тогда `git push`
+по https отвечает `Repository not found` даже на существующий репозиторий.
+Тогда нужен ключ с правом записи именно в этот репозиторий:
+
+1. `ssh-keygen -t ed25519 -f ~/.ssh/<имя>_deploy -N ""` — отдельный ключ,
+   деплой-ключ нельзя переиспользовать во втором репозитории.
+2. На GitHub: Settings → Deploy keys → Add deploy key → вставить `.pub`,
+   поставить **Allow write access**.
+3. Пуш:
+
+```bash
+GIT_SSH_COMMAND="ssh -i ~/.ssh/<имя>_deploy -o IdentitiesOnly=yes" git push
+```
+
+`IdentitiesOnly=yes` не даёт ssh перебирать остальные ключи и получать
+`Permission denied`. Проверка ключа:
+`ssh -i ~/.ssh/<имя>_deploy -o IdentitiesOnly=yes -T git@github.com`.
+
 ## Если секрет всё-таки уехал
 
 Порядок зависит от того, опубликован репозиторий или нет.
