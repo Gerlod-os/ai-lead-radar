@@ -15,20 +15,28 @@
 
 ![Google Таблица: лиды, категории, бюджеты и счётчики](vitrina/table.jpg)
 
+<p align="center"><i>Google Таблица: лиды с оценками, категориями и бюджетами, итоги сверху</i></p>
+
 <table>
 <tr>
 <td><img src="vitrina/card.jpg" width="420" alt="Карточка лида в чате"></td>
 <td><img src="vitrina/panel.jpg" width="420" alt="Панель управления в Telegram"></td>
 </tr>
 <tr>
-<td align="center"><i>Карточка лида: суть, ссылка, превью заказа</i></td>
-<td align="center"><i>Панель управления: разделы, настройки, запуск</i></td>
+<td align="center"><i>Карточка лида: оценка, бюджет, суть и ссылка</i></td>
+<td align="center"><i>Панель в Telegram: разделы, настройки, запуск</i></td>
 </tr>
 <tr>
 <td colspan="2" align="center"><img src="vitrina/admin.png" width="860" alt="Веб-панель: сводка и источники"></td>
 </tr>
 <tr>
 <td colspan="2" align="center"><i>Веб-панель: сводка по банку и здоровье источников</i></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><img src="vitrina/site.jpg" width="860" alt="Страница проекта"></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><i>Страница проекта: что внутри и как запустить</i></td>
 </tr>
 </table>
 
@@ -83,7 +91,7 @@
 
 ---
 
-## Какие задачи бизнеса это закрывает
+## Какие задачи бизнеса это может закрыть
 
 * **Продажи и агентства.** Сбор профильных заявок и лидов с площадок с автоотбором
   по чеку и тематике — вместо ручного просмотра лент.
