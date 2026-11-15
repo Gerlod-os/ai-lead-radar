@@ -56,11 +56,11 @@ check("сущности", clean_kwork_text("Фестиваль &laquo;Звонк
       "Фестиваль «Звонкий берег» — 2 дня")
 check("теги", clean_kwork_text("<p>Нужен <b>бот</b></p>"), "Нужен бот")
 
-print("== freelance.ru: разбор ленты (вёрстка снята с живой страницы 18.09.2026) ==")
+print("== freelance.ru: разбор ленты (структура как на живой странице; названия, id и заказчики вымышлены) ==")
 FRU_HTML = """
-<a class="task-card__title-link" href="/task/view/10699" title="Написание отзывов">
-                Написание отзывов            </a>
-        <p class="task-card__desc">Написать отзыв к нашему проекту<br />Выплата на карту</p>
+<a class="task-card__title-link" href="/task/view/100001" title="Сбор отзывов о товаре">
+                Сбор отзывов о товаре            </a>
+        <p class="task-card__desc">Собрать 20 отзывов о товаре<br />Выплата на карту</p>
         <div class="task-card__side">
             <div class="task-card__budget-lbl">Гонорар</div>
             <div class="task-card__budget">
@@ -69,9 +69,9 @@ FRU_HTML = """
         <div class="task-card__foot">
             <span class="task-card__foot-item" title="18.09.2026 07:35">18.09.2026</span>
         </div>
-<a class="task-card__title-link" href="/task/view/10450" title="Копирайтер">
-                Копирайтер            </a>
-        <p class="task-card__desc">Ищем копирайтера для текстов</p>
+<a class="task-card__title-link" href="/task/view/100002" title="Автор описаний">
+                Автор описаний            </a>
+        <p class="task-card__desc">Нужны описания для карточек товаров</p>
         <div class="task-card__side"><span class="bold">3 700 &#8381;</span></div>
         <div class="task-card__foot">
             <span class="task-card__foot-item" title="17.09.2026 19:46">17.09.2026</span>
@@ -79,15 +79,15 @@ FRU_HTML = """
 """
 fru = parse_freelanceru(FRU_HTML)
 check("две карточки разобраны", len(fru), 2)
-check("id — по номеру задания", fru[0]["id"], "fru:10699")
-check("ссылка на карточку", fru[0]["url"], "https://freelance.ru/task/view/10699")
-check("заголовок из атрибута", fru[0]["title"], "Написание отзывов")
+check("id — по номеру задания", fru[0]["id"], "fru:100001")
+check("ссылка на карточку", fru[0]["url"], "https://freelance.ru/task/view/100001")
+check("заголовок из атрибута", fru[0]["title"], "Сбор отзывов о товаре")
 check("гонорар стал ценой", fru[0]["price"], 950)
 check("цена с пробелом разобрана", fru[1]["price"], 3700)
 check("дата разобрана в datetime (МСК)", fru[0]["published"].strftime("%d.%m.%Y %H:%M"),
       "18.09.2026 07:35")
 check("дата текстом для карточки", fru[0]["published_text"], "18.09.2026 07:35")
-check("описание в карточке", "Написать отзыв" in fru[0]["description"], True)
+check("описание в карточке", "Собрать 20 отзывов" in fru[0]["description"], True)
 check("пустая лента не падает", parse_freelanceru("<html></html>"), [])
 
 print("== kadrof.ru: разбор ленты ==")
@@ -95,35 +95,35 @@ KADROF_HTML = """
 <div class="post project-list">
     <div class="date">17.09.2026 в 12:01</div>
     <div class="project-title">
-        <h6><a href="/work/111440">Менеджер по закупкам (удалённо)</a></h6>
+        <h6><a href="/work/100001">Специалист по закупкам (удалённо)</a></h6>
         <div class="budget"><span class="fix-budget">120000&nbsp;</span></div>
     </div>
     <div class="clear"></div>
-    ООО "Сфера" ищет двух закупщиков в свою команду.
+    Компания ищет двух специалистов в свою команду.
     <div class="project-info">
-        <div class="poster"><a href="/userprofile/view/205505">Ксения Маслова</a></div>
+        <div class="poster"><a href="/userprofile/view/900001">Анна Петрова</a></div>
     </div>
 </div>
 <div class="post project-list">
     <div class="date">17.09.2026 в 00:28</div>
     <div class="project-title">
-        <h6><a href="/work/111435">Написать музыкальную аранжировку по образцу</a></h6>
+        <h6><a href="/work/100002">Сделать аранжировку по образцу</a></h6>
     </div>
     <div class="clear"></div>
-    Написать подобие по характеру и ритму.
+    Нужно похожее по характеру и ритму.
     <div class="project-info"></div>
 </div>
 """
 kad = parse_kadrof(KADROF_HTML)
 check("две карточки разобраны", len(kad), 2)
-check("id — по номеру задания", kad[0]["id"], "kadrof:111440")
-check("ссылка на карточку", kad[1]["url"], "https://www.kadrof.ru/work/111435")
-check("заголовок без тегов", kad[0]["title"], "Менеджер по закупкам (удалённо)")
+check("id — по номеру задания", kad[0]["id"], "kadrof:100001")
+check("ссылка на карточку", kad[1]["url"], "https://www.kadrof.ru/work/100002")
+check("заголовок без тегов", kad[0]["title"], "Специалист по закупкам (удалённо)")
 check("бюджет стал ценой", kad[0]["price"], 120000)
 check("нет бюджета — цена пустая", kad[1]["price"], None)
 check("дата разобрана (МСК)", kad[0]["published"].strftime("%d.%m.%Y %H:%M"), "17.09.2026 12:01")
-check("заказчик в профиле", kad[0]["profile"], "Ксения Маслова")
-check("описание в карточке", "закупщиков" in kad[0]["description"], True)
+check("заказчик в профиле", kad[0]["profile"], "Анна Петрова")
+check("описание в карточке", "специалистов" in kad[0]["description"], True)
 
 print("== площадка по имени источника ==")
 check("Kwork-дизайн → Kwork", platform_of("Kwork-дизайн"), "Kwork")
