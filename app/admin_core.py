@@ -41,6 +41,29 @@ def load(path: Path | None = None) -> dict:
         return {}
 
 
+def sweep_tmp(target: Path) -> int:
+    """Убрать недописанные `<имя>.*.tmp` рядом с файлом. Вернуть, сколько убрали.
+
+    Зачем: атомарная запись делает временный файл и заменяет им настоящий. Если
+    замену запретили (песочница, права, диск), временный файл остаётся навсегда —
+    и так копится мусор: 15.11.2026 в configs/ накопилось 13 таких файлов.
+    Чистим перед каждой записью, а не «когда-нибудь потом»: тогда мусор не растёт
+    даже если замена снова не пройдёт.
+    """
+    target = Path(target)
+    removed = 0
+    try:
+        for junk in target.parent.glob(target.name + ".*.tmp"):
+            try:
+                junk.unlink()
+                removed += 1
+            except OSError:
+                pass
+    except OSError:
+        pass
+    return removed
+
+
 def save(cfg: dict, path: Path | None = None) -> None:
     """Записать конфиг атомарно: tmp рядом + замена. Файл либо старый, либо новый целиком.
 
@@ -49,6 +72,7 @@ def save(cfg: dict, path: Path | None = None) -> None:
     """
     target = Path(path) if path else CONFIG
     target.parent.mkdir(parents=True, exist_ok=True)
+    sweep_tmp(target)
     fd, tmp_name = tempfile.mkstemp(dir=str(target.parent), prefix=target.name + ".", suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:

@@ -1,4 +1,4 @@
-"""storage.py — банк данных заказов для ai-lead-radar.
+"""storage.py — банк данных заказов для job-monitor.
 
 orders.db — источник правды (SQLite):
   orders — каждая карточка: площадка, источник, текст, цена, статус active/archived
@@ -58,6 +58,18 @@ CREATE TABLE IF NOT EXISTS llm_results (
   sheet_sent INTEGER NOT NULL DEFAULT 0,   -- строка уже ушла в Google Таблицу
   updated_at TEXT NOT NULL
 );
+-- Вьюха недель: одна дата «начало недели» (понедельник) на каждый заказ.
+-- Без неё падал раздел «Статистика»: stats.py спрашивал v_orders_weekly,
+-- а создавать её было некому — вьюха жила только в чьей-то старой базе.
+-- Неделя считается от даты публикации, а если её нет — от первого появления.
+-- Формула: (день недели %w + 6) % 7 даёт смещение до понедельника (вс=6, пн=0).
+CREATE VIEW IF NOT EXISTS v_orders_weekly AS
+SELECT
+  date(COALESCE(NULLIF(published, ''), first_seen),
+       '-' || ((CAST(strftime('%w', COALESCE(NULLIF(published, ''), first_seen)) AS INTEGER) + 6) % 7)
+            || ' days') AS week_start,
+  id, platform, source_name, kind, price, notified, status, published, first_seen
+FROM orders;
 """
 
 # Маркеры вакансии в тексте: найдено хоть одно → kind='vacancy' (не блокируем, а метим).

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bot.py — админка ai-lead-radar: ОДНА панель, кнопки, управление с телефона.
+"""bot.py — админка job-monitor: ОДНА панель, кнопки, управление с телефона.
 
 ПАТТЕРН «ОДНО ОКНО» (решение владельца 18.09.2026):
 бот шлёт панель заново В КОНЕЦ ленты и удаляет прежнюю. Нажатие любой кнопки
@@ -38,6 +38,7 @@ import sys
 import tempfile
 import threading
 import time
+import traceback
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -162,7 +163,7 @@ PROMPT_KB_REPLY = {"keyboard": [[PROMPT_EDIT, PROMPT_RESET], [BACK_LABEL]],
                    "resize_keyboard": True}
 
 
-HOME_TEXT = ("<b>⚙️ Админка радара</b>\n\n"
+HOME_TEXT = ("<b>⚙️ Админка job-monitor</b>\n\n"
              "Кнопки меню — у поля ввода. Каждое нажатие присылает свежую панель, "
              "прежняя удаляется.\n"
              "В «🔍 Фильтры» и «📄 Источники» кнопки правки — тоже у поля ввода, "
@@ -184,6 +185,7 @@ def atomic_write_text(path: Path, text: str) -> None:
     path = Path(path)
     if path.parent:
         path.parent.mkdir(parents=True, exist_ok=True)
+    core.sweep_tmp(path)          # мусор от прошлых неудачных замен — до новой записи
     fd, tmp_name = tempfile.mkstemp(dir=str(path.parent or "."),
                                     prefix=path.name + ".", suffix=".tmp")
     try:
@@ -487,8 +489,12 @@ def show_home(token: str, chat: int, message_id: int | None = None) -> None:
 
 
 def show_text_screen(token: str, chat: int, text: str) -> None:
-    """Экран-сообщение (результат проверки, подсказка) — та же панель."""
-    show(token, chat, text)
+    """Экран-сообщение (результат проверки, подсказка) — та же панель.
+
+    Панель, а не голый текст: раньше отчёт приходил без кнопок, и вернуться в меню
+    было нечем — «отчёт есть, панели нет» (слово владельца 15.11.2026).
+    """
+    show_inline(token, chat, text, INLINE_MAIN)
 
 
 # ============================================================
@@ -916,7 +922,11 @@ def play_batch(token: str, owner: int, batch: list[dict]) -> int:
         try:
             route(token, owner, upd)
         except Exception as error:
+            # Строка ошибки без места — бесполезна: «rename refused» не говорит,
+            # какой файл и какая кнопка. Хвост трассировки (5 кадров) показывает и то и другое.
+            where = traceback.format_exc().strip().splitlines()[-5:]
             log(f"обработка обновления: {error}")
+            log("место ошибки: " + " | ".join(part.strip() for part in where))
         spent = time.time() - started
         if spent > 1.5:                     # диагностика тормозов: видно, что именно медленное
             log(f"медленная обработка: {spent:.1f} с")
@@ -995,7 +1005,9 @@ def run_cycle(token: str, chat: int, release_lock: bool = False) -> None:
 
 
 def run_cycle_body(token: str, chat: int) -> None:
-    show_text_screen(token, chat, "⏳ Проверяю источники, это ~20 секунд…")
+    # Одна панель на весь прогон: «⏳ Проверяю» превращается в отчёт правкой
+    # того же сообщения, кнопки остаются под рукой всё время.
+    panel_id = show_inline(token, chat, "⏳ Проверяю источники, это ~20 секунд…", INLINE_MAIN)
     try:
         res = subprocess.run(
             [sys.executable, "monitor.py"],
@@ -1005,11 +1017,12 @@ def run_cycle_body(token: str, chat: int) -> None:
         body = "\n".join(tail) if tail else (res.stderr or "пусто")[:500]
         fresh = [line for line in (res.stdout or "").splitlines() if "ПО ФИЛЬТР ПРОШЛО" in line]
         head = f"✅ Цикл выполнен. {fresh[0].split(':')[-1].strip() if fresh else 'новых нет'}"
-        show_text_screen(token, chat, f"{head}\n\n{body}")
+        show_inline(token, chat, f"{head}\n\n{body}", INLINE_MAIN, panel_id)
     except subprocess.TimeoutExpired:
-        show_text_screen(token, chat, "⚠️ Цикл не уложился в 5 минут — смотри volume/monitor.log")
+        show_inline(token, chat, "⚠️ Цикл не уложился в 5 минут — смотри volume/monitor.log",
+                    INLINE_MAIN, panel_id)
     except Exception as error:
-        show_text_screen(token, chat, f"⚠️ Не смог запустить цикл: {error}")
+        show_inline(token, chat, f"⚠️ Не смог запустить цикл: {error}", INLINE_MAIN, panel_id)
 
 
 # ============================================================

@@ -1287,7 +1287,8 @@ STDLIB = set(_sys.builtin_module_names) | {
     "__future__", "argparse", "ast", "base64", "collections", "concurrent", "copy",
     "csv", "datetime", "email",
     "fcntl", "html", "http", "io", "json", "os", "pathlib", "queue", "re", "shutil",
-    "sqlite3", "subprocess", "sys", "tempfile", "threading", "time", "urllib", "xml",
+    "sqlite3", "subprocess", "sys", "tempfile", "threading", "time", "traceback",
+    "urllib", "xml",
 }
 imports = set()
 for path in APP.glob("*.py"):
