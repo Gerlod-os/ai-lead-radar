@@ -24,9 +24,13 @@
 <td align="center"><i>Карточка лида: суть, ссылка, превью заказа</i></td>
 <td align="center"><i>Панель управления: разделы, настройки, запуск</i></td>
 </tr>
+<tr>
+<td colspan="2" align="center"><img src="vitrina/admin.png" width="860" alt="Веб-панель: сводка и источники"></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><i>Веб-панель: сводка по банку и здоровье источников</i></td>
+</tr>
 </table>
-
-![Веб-панель: сводка по банку и здоровье источников](vitrina/admin.png)
 
 ---
 
