@@ -252,20 +252,32 @@ def card(source: str, item: dict, kind: str = "order", llm: dict | None = None) 
     if kind == "order" and st.classify_kind(item.get("title"), item.get("description")) == "vacancy":
         kind = "vacancy"
     published = item["published"].strftime("%d.%m %H:%M") if item.get("published") else ""
-    when = item.get("published_text") or published or "?"
+    when = item.get("published_text") or published or ""
     price = item.get("price") or find_price(f"{item['title']} {item['description']}")
     head = f"{chr(0x1F4BC) if kind == 'vacancy' else chr(0x1F6A8)} {item['title'].strip()}"
-    lines = [head, f"📍 {source} · {age_text(item.get('published'))} назад · {when}"]
-    if price:
-        lines[1] += f" · 💰 ~{price:,} ₽".replace(",", " ")
+    # Строка «где и когда» собирается из того, что известно. Раньше неизвестное
+    # печаталось как «? назад · ?» — мусор в карточке (Kwork не отдаёт дату вовсе).
+    meta = [f"📍 {source}"]
+    age = age_text(item.get("published"))
+    if age != "?":
+        meta.append(f"{age} назад")
+    if when:
+        meta.append(when)
     if item.get("note"):
-        lines[1] += f" · {item['note']}"
+        meta.append(str(item["note"]))
+    if price and not llm:
+        meta.append(f"💰 ~{price:,} ₽".replace(",", " "))
+    # Пустая строка между смысловыми блоками: без неё две карточки подряд в чате
+    # читаются как одна стена текста (слово владельца 15.11.2026: «как будто слиплись»).
+    lines = [head, " · ".join(meta), ""]
     if llm:
         parts = [f"🤖 Оценка {llm.get('score')}/10"]
         if llm.get("category"):
             parts.append(str(llm["category"]))
-        if llm.get("budget"):
-            parts.append(f"бюджет: {llm['budget']}")
+        # Деньги печатаются ОДИН раз: бюджет от модели, а если его нет — цена объявления.
+        money = llm.get("budget") or (f"~{price:,} ₽".replace(",", " ") if price else "")
+        if money:
+            parts.append(f"💰 {money}")
         lines.append(" · ".join(parts))
         if llm.get("summary"):
             lines.append(f"📝 {llm['summary'][:300]}")
@@ -276,6 +288,7 @@ def card(source: str, item: dict, kind: str = "order", llm: dict | None = None) 
     if item.get("profile"):
         lines.append(f"👤 {item['profile']}")
     if item.get("url"):
+        lines.append("")
         lines.append(f"🔗 {item['url']}")
     return "\n".join(lines)
 
