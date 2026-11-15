@@ -1,0 +1,103 @@
+{
+  "admin_ui": "monitor",
+  "llm_min_score": 7,
+  "llm_timeout": 120,
+  "llm_pause": 1.0,
+  "max_llm_per_run": 25,
+  "schedule": {
+    "enabled": false,
+    "interval_hours": 6,
+    "last_run": ""
+  },
+  "llm_prompt": "",
+  "keywords": [
+    "парсер",
+    "парсинг",
+    "парс",
+    "телеграм",
+    "telegram",
+    "бот",
+    "автоматизация",
+    "сбор данных",
+    "скрипт",
+    "python",
+    "ai",
+    "нейросет"
+  ],
+  "exclude_words": [
+    "сайт под ключ",
+    "bootstrap",
+    "wordpress",
+    "дизайн интерьера"
+  ],
+  "min_price": 0,
+  "max_age_days": 7,
+  "show_vacancies": false,
+  "stale_hours": 2,
+  "pause_seconds": 15,
+  "archive": {
+    "week_days": 7,
+    "gone_hours": 48,
+    "keep": []
+  },
+  "sources": [
+    {
+      "name": "FL.ru",
+      "platform": "FL.ru",
+      "type": "flru_rss",
+      "url": "https://www.fl.ru/rss/",
+      "enabled": true
+    },
+    {
+      "name": "Kwork-разработка",
+      "platform": "Kwork",
+      "type": "kwork_page",
+      "url": "https://kwork.ru/projects?c=11",
+      "enabled": true
+    },
+    {
+      "name": "Kwork-дизайн",
+      "platform": "Kwork",
+      "type": "kwork_page",
+      "url": "https://kwork.ru/projects?c=15",
+      "enabled": true
+    },
+    {
+      "name": "Kwork-тексты",
+      "platform": "Kwork",
+      "type": "kwork_page",
+      "url": "https://kwork.ru/projects?c=5",
+      "enabled": true
+    },
+    {
+      "name": "Kwork-соцсети",
+      "platform": "Kwork",
+      "type": "kwork_page",
+      "url": "https://kwork.ru/projects?c=45",
+      "enabled": true
+    },
+    {
+      "name": "Kwork-бизнес",
+      "platform": "Kwork",
+      "type": "kwork_page",
+      "url": "https://kwork.ru/projects?c=83",
+      "enabled": true
+    },
+    {
+      "name": "Freelance.ru",
+      "platform": "Freelance.ru",
+      "type": "freelanceru_page",
+      "url": "https://freelance.ru/task",
+      "enabled": true
+    },
+    {
+      "name": "Kadrof",
+      "platform": "Kadrof",
+      "type": "kadrof_page",
+      "url": "https://www.kadrof.ru/work",
+      "enabled": false,
+      "_comment": "разборщик готов и проверен 18.09.2026 (10 карточек), но лента смешана с вакансиями — включается флагом enabled"
+    }
+  ],
+  "panel": "inline"
+}

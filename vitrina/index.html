@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ai-lead-radar — радар заказов с ИИ-оценкой</title>
+<meta name="description" content="Семь биржевых лент, фильтр по словам и оценка заказа нейросетью 0–10. Карточка в Telegram, строка в CSV, при желании — в Google Таблицу. Только стандартная библиотека Python.">
+<style>
+  /* Одна страница, без сборки и без внешних файлов: открывается двойным щелчком,
+     работает без интернета (кроме самих бирж, разумеется). Картинок нет намеренно:
+     чужие логотипы и фото тянут за собой права, а своих у проекта пока нет. */
+  :root {
+    --bg: #0e1116; --panel: #161b22; --line: #232a33;
+    --text: #e8ecf3; --muted: #94a0b2; --accent: #57b6ff; --good: #5ddc9a;
+    --warn: #f0b45c; --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 22px; }
+  header {
+    border-bottom: 1px solid var(--line); position: sticky; top: 0;
+    background: rgba(14,17,22,.92); backdrop-filter: blur(8px); z-index: 5;
+  }
+  .nav { display: flex; align-items: center; gap: 18px; height: 62px; }
+  .brand { font-weight: 700; letter-spacing: .2px; }
+  .brand span { color: var(--accent); }
+  .nav a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  .nav a:hover { color: var(--text); }
+  .nav .spacer { flex: 1; }
+  .btn {
+    display: inline-block; padding: 9px 16px; border-radius: 10px; font-size: 14px;
+    text-decoration: none; border: 1px solid var(--line); color: var(--text);
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #06121c; font-weight: 600; }
+  .hero { padding: 72px 0 40px; }
+  h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.15; margin: 0 0 16px; letter-spacing: -.5px; }
+  .lead { font-size: clamp(16px, 2.2vw, 19px); color: var(--muted); max-width: 660px; margin: 0 0 26px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .tag { font-size: 13px; color: var(--muted); border: 1px solid var(--line);
+         border-radius: 999px; padding: 4px 12px; }
+  section { padding: 46px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 24px; margin: 0 0 8px; letter-spacing: -.3px; }
+  .sub { color: var(--muted); margin: 0 0 26px; max-width: 700px; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 16px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+  .nums { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .num { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+  .num b { display: block; font-size: 28px; line-height: 1.1; }
+  .num span { color: var(--muted); font-size: 13px; }
+  .num.good b { color: var(--good); }
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  ol.steps li { position: relative; padding: 0 0 18px 44px; }
+  ol.steps li::before {
+    counter-increment: s; content: counter(s);
+    position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--panel); border: 1px solid var(--line); color: var(--accent);
+    display: grid; place-items: center; font-size: 14px; font-weight: 600;
+  }
+  ol.steps b { display: block; }
+  ol.steps span { color: var(--muted); font-size: 14.5px; }
+  pre {
+    background: #0a0d12; border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px 18px; overflow: auto; font-size: 13.5px; color: #cfe3f5; margin: 0;
+  }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .honest { border-left: 3px solid var(--warn); padding: 4px 0 4px 16px; color: var(--muted); }
+  .honest b { color: var(--text); }
+  footer { padding: 34px 0 60px; color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); }
+  footer a { color: var(--accent); }
+  @media (max-width: 620px) { .nav a.hide-sm { display: none; } .hero { padding: 48px 0 30px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand">ai-lead-<span>radar</span></div>
+    <a class="hide-sm" href="#how">Как работает</a>
+    <a class="hide-sm" href="#numbers">Замер</a>
+    <a class="hide-sm" href="#limits">Ограничения</a>
+    <div class="spacer"></div>
+    <a class="btn primary" href="#start">Запустить</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <h1>Заказы с бирж, отобранные нейросетью —<br>а не глазами в семь утра</h1>
+    <p class="lead">
+      Радар читает семь лент фриланс-бирж, отсеивает мусор по словам, а потом спрашивает
+      модель: «это наша задача или рерайт за пятьсот рублей?» Оценка 0–10, короткое
+      резюме, карточка в Telegram. Всё на стандартной библиотеке Python — ни одной
+      внешней зависимости.
+    </p>
+    <div class="row">
+      <span class="tag">Python 3.9+</span>
+      <span class="tag">0 ₽ за вызовы модели в локальном режиме</span>
+      <span class="tag">MIT</span>
+      <span class="tag">344 автотестов</span>
+    </div>
+  </div>
+
+  <section id="how">
+    <h2>Пять шагов, каждый проверяем</h2>
+    <p class="sub">Порядок не случайный: сначала бесплатный отсев, потом платное внимание модели, и только потом доставка.</p>
+    <ol class="steps">
+      <li><b>Сбор</b><span>FL.ru, пять лент Kwork, Freelance.ru. Заказ попадает в банк даже если не прошёл фильтр: «отсеяли» и «не видели» — разные вещи.</span></li>
+      <li><b>Слова</b><span>Ключевые слова ловятся по началу («бот» поймает «бота», но не «работают»), стоп-слова — только целым словом.</span></li>
+      <li><b>Оценка ИИ</b><span>Модель возвращает JSON: оценка, категория, бюджет, суть, причина. Кривой ответ — не приговор, а повод переспросить один раз.</span></li>
+      <li><b>Доставка</b><span>В чат уходит только то, что дотянуло до порога. Отметка «отправлено» ставится после ответа Telegram, а не до — иначе упавшая сеть теряет заказ навсегда.</span></li>
+      <li><b>Витрины</b><span>CSV перезаписывается каждый цикл, Google Таблица — по желанию: строка уходит в таблицу через вебхук Apps Script с общим токеном.</span></li>
+    </ol>
+  </section>
+
+  <section id="numbers">
+    <h2>Замер, а не обещание</h2>
+    <p class="sub">
+      15 ноября 2026, 15:16–15:23 МСК. Mac владельца, Python 3.9.6, бесплатная модель
+      через локальный CLI. Считано по логу цикла и по базе после прогона.
+    </p>
+    <div class="nums">
+      <div class="num"><b>145</b><span>позиций скачано с семи лент</span></div>
+      <div class="num"><b>25</b><span>ушли к модели (потолок за цикл)</span></div>
+      <div class="num good"><b>11</b><span>лидов с оценкой 7 и выше</span></div>
+      <div class="num"><b>8,1 с</b><span>средний интервал между вызовами</span></div>
+      <div class="num"><b>0</b><span>дублей в результатах</span></div>
+      <div class="num"><b>195 с</b><span>весь шаг ИИ на 25 заказов</span></div>
+    </div>
+    <p class="sub" style="margin-top:18px">
+      Проще говоря: из 25 случайных заказов с бирж нашими оказались 11 — боты, парсинг,
+      интеграции с API. Остальные 14 — рерайт, инвайтинг и заполнение карточек по шаблону.
+    </p>
+  </section>
+
+  <section>
+    <h2>Что внутри, кроме идеи</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Два режима ИИ</h3>
+        <p>Локальный CLI за 0 ₽ или любой OpenAI-совместимый шлюз под ключ компании.
+           Переключается одной строкой в <code>.env</code>, код не правится.</p>
+      </div>
+      <div class="card">
+        <h3>Две админки</h3>
+        <p>Кнопки в Telegram и локальная веб-панель на семи экранах. Одно ядро, один
+           конфиг: порог и слова не разъезжаются между видами.</p>
+      </div>
+      <div class="card">
+        <h3>Честные отказы</h3>
+        <p>Таймаут, код 401/429, кривой JSON — это статус в базе и повтор, а не тихая
+           пустота. Лимит карточек не обрывает источник.</p>
+      </div>
+      <div class="card">
+        <h3>Без зависимостей</h3>
+        <p>SQLite, urllib, http.server. Нет ни <code>python-telegram-bot</code>, ни
+           <code>streamlit</code>, ни <code>gspread</code> — проверяется тестом.</p>
+      </div>
+      <div class="card">
+        <h3>Тесты, которые умеют падать</h3>
+        <p>344 проверок. В отдельной копии ломали обрезку оценки, срез рассуждений и
+           проверку токена — набор краснел каждый раз.</p>
+      </div>
+      <div class="card">
+        <h3>Секреты отдельно</h3>
+        <p>Токены, ключи и адрес вебхука живут в <code>.env</code>, а рядом лежит
+           <code>.env.example</code> с плейсхолдерами. База и выгрузки закрыты
+           <code>.gitignore</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="start">
+    <h2>Запуск</h2>
+    <p class="sub">Три команды. Всё остальное — настройка <code>.env</code> под свои ключи.</p>
+<pre><code>cd app
+cp ../.env.example .env      # токен бота, chat_id, режим ИИ
+python3 monitor.py --dry-run # посмотреть, что нашлось, ничего не отправляя
+python3 monitor.py           # рабочий цикл: банк, карточки, CSV
+
+python3 test_monitor.py      # 394/394 — ALL_GREEN</code></pre>
+    <p class="sub" style="margin-top:14px">
+      Диагностика: крути <code>--dry-run</code>, смотри <code>exports/leads.csv</code>
+      и <code>volume/orders.db</code>. Признак жизни цикла — файл
+      <code>volume/heartbeat.json</code>: он обновляется сам, поэтому «жив или умер»
+      видно снаружи, а не из строки лога, которую печатает сам механизм.
+    </p>
+  </section>
+
+  <section id="limits">
+    <h2>Чего здесь нет и почему</h2>
+    <p class="honest"><b>Отправка в Telegram не проверена живьём.</b> В замеренный прогон
+      токен не подключался — поэтому в логе честно «НЕ принял 11 из 11, остаются в очереди».
+      Очередь на повтор — и есть проверка обратного пути.</p>
+    <p class="honest"><b>Режим под чужой ключ проверен на заглушке.</b> 200, 401, 429 и таймаут
+      — на локальном сервере; с настоящим платным ключом не запускался, ключа нет.</p>
+    <p class="honest"><b>Telegram-каналы как источник не используются.</b> Правила платформы
+      запрещают собирать данные для ИИ. Своя карточка через Bot API — можно, чужие каналы — нет.</p>
+    <p class="honest"><b>Тендеры и Хабр Фриланс не подключены.</b> Открытого RSS у них нет:
+      это были бы новые парсеры, а не строка в конфиге. Обещать «добавим галочкой» — врать.</p>
+    <p class="honest"><b>Веб-панель — для своей машины.</b> Слушает 127.0.0.1 и пароля не имеет;
+      наружу её выставлять нельзя.</p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    ai-lead-radar · код под MIT, идеи — свои и из открытых описаний (см. <code>NOTICE</code>) ·
+    цифры на странице — из прогона 15.11.2026, а не из презентации.
+  </div>
+</footer>
+
+</body>
+</html>
