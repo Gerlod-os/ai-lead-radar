@@ -38,7 +38,7 @@ python3 admin_web.py         # вторая админка: http://127.0.0.1:876
 Проверка без сети и без Telegram:
 
 ```bash
-cd app && python3 test_monitor.py     # ИТОГ: 394/394 — ALL_GREEN
+cd app && python3 test_monitor.py     # ИТОГ: 395/395 — ALL_GREEN
 ```
 
 ## Живой прогон: настоящие числа
@@ -154,7 +154,7 @@ free models and only gets fixes for critical bugs». Обновление до `
 ## Проверки
 
 ```
-python3 app/test_monitor.py     → 394/394, код возврата 0
+python3 app/test_monitor.py     → 395/395, код возврата 0
 ```
 
 Тест обязан уметь упасть — это проверено тремя поломками в отдельной копии:
